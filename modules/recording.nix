@@ -5,7 +5,7 @@
       programs.gpu-screen-recorder.enable = true;
       environment.systemPackages = [
         pkgs.gpu-screen-recorder
-        pkgs.manim
+        # pkgs.manim
         pkgs.losslesscut
         pkgs.wf-recorder
         pkgs.kdePackages.dolphin
@@ -17,6 +17,7 @@
         (pkgs.writeShellScriptBin "recording_tool" ''
           exec /etc/nixos/NNC/utils/recording_tool/target/debug/recording_tool "$@"
         '')
+
       ];
 
     };

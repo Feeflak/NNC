@@ -10,6 +10,7 @@
         feishin
         ghostty
         orca-slicer
+        opencode
         # kdePackages.dolphin
       ];
     };

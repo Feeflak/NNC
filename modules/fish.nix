@@ -39,7 +39,6 @@
           zoxide init fish | source
           set -g fish_greeting ""
           clear
-          todo show
         '';
         functions = {
           y = {

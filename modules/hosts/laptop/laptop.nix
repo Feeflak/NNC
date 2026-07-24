@@ -20,7 +20,6 @@
         auto_mount
         cs
         zig
-        nim
         rust
         c
         js

@@ -15,7 +15,7 @@ struct Config {
 
 fn project_path(config: &Config) -> String {
     let home = env::var("HOME").expect("HOME not set");
-    format!("{home}/kden/{}", config.project_name)
+    format!("{home}/rec/{}", config.project_name)
 }
 fn execute_command(cmd: String) {
     println!("CMD: {cmd}");

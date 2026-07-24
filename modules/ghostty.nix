@@ -1,8 +1,8 @@
 {
-  flake.homeModules.general = {lib, ...}: {
+  flake.homeModules.general = { lib, ... }: {
     programs.ghostty.enable = true;
     programs.ghostty.settings = lib.mkForce {
-      "background-opacity" = 0.9;
+      "background-opacity" = 1;
       "background-blur" = true;
       "clipboard-paste-protection" = false;
       "mouse-hide-while-typing" = true;

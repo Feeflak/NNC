@@ -18,10 +18,10 @@
       system = "x86_64-linux";
       modules = with self.nixosModules; [
         noctalia
+        scal
         auto_mount
         cs
         zig
-        nim
         rust
         py
         c
