@@ -7,7 +7,7 @@
       "clipboard-paste-protection" = false;
       "mouse-hide-while-typing" = true;
       "shell-integration" = "fish";
-      "font-family" = "MesloLGM Nerd Font";
+      "font-family" = "FiraCode Nerd Font Mono";
       "command" = "fish --login --interactive";
       "copy-on-select" = "clipboard";
     };

@@ -13,7 +13,7 @@
           orun = "set -x OCAMLRUNPARAM b; dune build; dune exec";
           q = "qalc -c -i";
           helium = "nix run github:AlvaroParker/helium-nix";
-          zen = "nix run github:youwen5/zen-browser-flake";
+          # zen = "nix run github:youwen5/zen-browser-flake";
           onUpdate = "sudo /etc/nixos/onUpdate.sh";
           rebuild = "readHost ; cd /etc/nixos/NNC/ ; git add '*'; sudo nix run .#write-flake --access-tokens github.com=$GITHUB_TOKEN ; sudo nixos-rebuild switch --upgrade --flake .#$host";
           updateNix = "cd /etc/nixos/NNC/; git pull ; rebuild ; sudo nix flake update --access-tokens github.com=$GITHUB_TOKEN ; flatpak update -y ; onUpdate ; cleanup; nix-store --optimise ; syncTodo";
@@ -85,6 +85,7 @@
           vm = "~/vms/run.sh";
           nixCargo = "nix-shell --run 'cargo run'";
           token = "set -x GITHUB_TOKEN";
+          iph = "mkdir /tmp/iphone && ifuse /tmp/iphone";
           record_audio = "
 ffmpeg \
         -f pulse -i alsa_output.pci-0000_15_00.6.analog-stereo.monitor \

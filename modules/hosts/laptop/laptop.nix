@@ -17,6 +17,8 @@
     nixosConfigurations.laptop = inputs.nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       modules = with self.nixosModules; [
+
+        ios
         auto_mount
         cs
         zig

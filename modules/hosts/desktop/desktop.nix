@@ -17,6 +17,7 @@
     nixosConfigurations.desktop = inputs.nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       modules = with self.nixosModules; [
+        ios
         noctalia
         scal
         auto_mount

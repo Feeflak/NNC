@@ -74,7 +74,7 @@ add 'help' argument to see all possible operations
 
             let mut new_name = String::with_capacity(stem.len() + 7);
             new_name.push_str(&stem);
-            new_name.push_str("_transc.mov");
+            new_name.push_str(".mov");
 
             let transcoded_file_path = parent.join(new_name);
             execute_command(format!(
