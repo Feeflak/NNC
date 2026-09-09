@@ -40,6 +40,17 @@
         "application/xhtml+xml" = [ "zen.desktop" ];
 
         "text/plain" = [ "neovide.desktop" ];
+
+        "video/mp4" = [ "ffplay.desktop" ];
+        "video/x-matroska" = [ "ffplay.desktop" ];
+        "video/quicktime" = [ "ffplay.desktop" ];
+        "video/webm" = [ "ffplay.desktop" ];
+        "video/x-flv" = [ "ffplay.desktop" ];
+        "video/x-msvideo" = [ "ffplay.desktop" ];
+        "video/mpeg" = [ "ffplay.desktop" ];
+        "video/ogg" = [ "ffplay.desktop" ];
+        "video/x-m4v" = [ "ffplay.desktop" ];
+        "video/x-matroska-3d" = [ "ffplay.desktop" ];
       };
 
       xdg.desktopEntries.yazi-ghostty = {
@@ -49,6 +60,26 @@
         type = "Application";
         categories = [ "Utility" ];
         mimeType = [ "inode/directory" ];
+      };
+
+      xdg.desktopEntries.ffplay = {
+        name = "FFplay";
+        exec = "${pkgs.ffmpeg}/bin/ffplay %f";
+        terminal = false;
+        type = "Application";
+        categories = [ "AudioVideo" "Video" "Player" ];
+        mimeType = [
+          "video/mp4"
+          "video/x-matroska"
+          "video/quicktime"
+          "video/webm"
+          "video/x-flv"
+          "video/x-msvideo"
+          "video/mpeg"
+          "video/ogg"
+          "video/x-m4v"
+          "video/x-matroska-3d"
+        ];
       };
 
       xdg.terminal-exec.enable = true;
