@@ -7,9 +7,10 @@
 
     #For nixos-unstable, they renamed it
     services.xserver.enable = true;
-    services.xserver.videoDrivers = ["nvidia"];
+    services.xserver.videoDrivers = [ "nvidia" ];
 
     hardware.nvidia = {
+      branch = "latest";
       modesetting.enable = true;
       powerManagement.enable = true;
       # Fine-grained power management. Turns off GPU when not in use.

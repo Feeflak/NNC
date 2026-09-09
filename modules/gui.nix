@@ -7,6 +7,7 @@
         # signal-desktop
         gparted
         # firefox
+        freecad
         feishin
         ghostty
         orca-slicer

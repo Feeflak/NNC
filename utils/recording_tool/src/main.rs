@@ -19,7 +19,7 @@ fn project_path(config: &Config) -> String {
 }
 fn execute_command(cmd: String) {
     println!("CMD: {cmd}");
-    Command::new("bash").arg("-c").arg(cmd).spawn().unwrap();
+    Command::new("bash").arg("-c").arg(cmd).output().unwrap();
 }
 const HELP: &'static str = r#"
 rec-start -> start recording
@@ -65,31 +65,47 @@ add 'help' argument to see all possible operations
     );
     match operation_name.as_str() {
         "transcode" => {
-            let path_string = args
-                .next()
-                .expect("Expected to find path to a file that you want to transcode!");
-            let path = Path::new(&path_string);
-            let parent = path.parent().unwrap();
-            let stem = path.file_stem().unwrap().to_string_lossy();
+            while let Some(path_string) = args.next() {
+                let path = Path::new(&path_string);
+                let parent = path.parent().unwrap();
+                let stem = path.file_stem().unwrap().to_string_lossy();
 
-            let mut new_name = String::with_capacity(stem.len() + 7);
-            new_name.push_str(&stem);
-            new_name.push_str(".mov");
+                let mut new_name = String::with_capacity(stem.len() + 7);
+                new_name.push_str(&stem);
+                new_name.push_str(".mov");
 
-            let transcoded_file_path = parent.join(new_name);
-            execute_command(format!(
-                "ffmpeg -i {path_string} \
+                let transcoded_file_path = parent.join(new_name);
+                execute_command(format!(
+                    "ffmpeg -i {path_string} \
         -vf fps=60 \
         -c:v dnxhd -profile:v dnxhr_sq \
         -pix_fmt yuv422p \
         -c:a pcm_s16le \
                     {}",
-                transcoded_file_path.to_str().unwrap()
-            ));
+                    transcoded_file_path.to_str().unwrap()
+                ));
+            }
         }
         "rec-end" => {
-            execute_command("pkill -f wf-recorder       ".to_string());
-            execute_command("pkill -INT pw-record".to_string());
+            execute_command("pkill -INT -f gpu-screen-recorder".to_string());
+            execute_command("pkill -INT -x pw-record".to_string());
+        }
+        "rec-app-audio" => {
+            DirBuilder::new()
+                .recursive(true)
+                .create(project_path(&config) + "/rec/")
+                .unwrap();
+            execute_command(format!(
+                r#"
+gpu-screen-recorder -v yes \
+          -w screen \
+          -f 60 \
+          -a default_output \
+          -k av1_hdr \
+          -o "{}/recording_$(date +%F_%H-%M-%S).mkv" 
+"#,
+                project_path(&config) + "/rec"
+            ))
         }
         "rec-start" => {
             DirBuilder::new()
@@ -98,10 +114,12 @@ add 'help' argument to see all possible operations
                 .unwrap();
             execute_command(format!(
                 r#"
-wf-recorder -a \
-  -c h264_nvenc\
-  -r 60 \
-  -f "{}/recording_$(date +%F_%H-%M-%S).mkv"
+gpu-screen-recorder -v yes \
+          -w screen \
+          -f 60 \
+          -a default_input \
+          -k av1_hdr \
+          -o "{}/recording_$(date +%F_%H-%M-%S).mkv" 
 "#,
                 project_path(&config) + "/rec"
             ))

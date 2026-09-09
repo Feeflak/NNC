@@ -1,10 +1,10 @@
-{inputs, ...}: {
+{ inputs, ... }: {
   flake-file.inputs.steam-config-nix = {
     url = "github:different-name/steam-config-nix";
     inputs.nixpkgs.follows = "nixpkgs";
   };
-  flake.nixosModules.steam = {pkgs, ...}: {
-    imports = [inputs.steam-config-nix.nixosModules.default];
+  flake.nixosModules.steam = { pkgs, ... }: {
+    imports = [ inputs.steam-config-nix.nixosModules.default ];
 
     programs = {
       gamemode.enable = true;
@@ -28,12 +28,11 @@
         localNetworkGameTransfers.openFirewall = true; # Open ports in the firewall for Steam Local Network Game Transfers
         config = {
           enable = true;
-          closeSteam = true;
           defaultCompatTool = "GE-Proton";
 
           apps = {
-            cyberpunk-2077 = {
-              id = 1091500;
+            "1091500" = {
+              name = "cyberpunk-2077" ;
               compatTool = "GE-Proton";
               launchOptions = {
                 env.WINEDLLOVERRIDES = "winmm,version=n,b";

@@ -41,6 +41,18 @@
           clear
         '';
         functions = {
+          rp.body = ''
+            set output (recording_tool 2>&1)
+
+            set project_path (string match -r 'project_path:"([^"]+)"' $output)[2]
+
+            if test -n "$project_path"
+                cd "$project_path"
+            else
+                echo "Could not find project_path" >&2
+                return 1
+            end
+          '';
           y = {
             body = ''
               set tmp (mktemp -t "yazi-cwd.XXXXXX")
