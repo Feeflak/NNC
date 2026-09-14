@@ -30,10 +30,14 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    nixpkgs-resolve.url = "github:NixOS/nixpkgs/586b979a8ccb8f35d5fe06645dd678a8b343f16f";
+    nixpkgs-resolve.url = "github:NixOS/nixpkgs/nixos-unstable";
     noctalia.url = "github:noctalia-dev/noctalia";
     nvf = {
       url = "github:NotAShelf/nvf";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    scal = {
+      url = "github:feeflak/SCAL";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     steam-config-nix = {

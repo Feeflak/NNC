@@ -5,6 +5,7 @@
   };
   flake.nixosModules.steam = { pkgs, ... }: {
     imports = [ inputs.steam-config-nix.nixosModules.default ];
+    
 
     programs = {
       gamemode.enable = true;

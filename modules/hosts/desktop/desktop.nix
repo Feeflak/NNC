@@ -18,6 +18,7 @@
       system = "x86_64-linux";
       modules = with self.nixosModules; [
         ios
+        tf2
         noctalia
         scal
         auto_mount

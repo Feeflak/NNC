@@ -1,0 +1,46 @@
+From: OpenCode debug session
+Date: Wed, 09 Sep 2026 23:40:00 +0200
+Subject: [PATCH] usbmuxd: retry initial lockdownd connection while trust dialog is pending
+
+On iOS 26+ the first lockdownd connection can return LOCKDOWN_E_MUX_ERROR
+(-8) while the "Trust This Computer?" dialog is still pending.  Without a
+retry the preflight worker immediately bails out and the device is never made
+visible to clients, so pairing can never complete.  Retry the connection for
+up to ~90 seconds to give the user time to accept the dialog.
+---
+ src/preflight.c | 19 +++++++++++++++++--
+ 1 file changed, 17 insertions(+), 2 deletions(-)
+
+diff --git a/src/preflight.c b/src/preflight.c
+index 3ded00c..9f8e7a2 100644
+--- a/src/preflight.c
++++ b/src/preflight.c
+@@ -154,9 +154,24 @@ static void* preflight_worker_handle_device_add(void* userdata)
+ 	usbmuxd_log(LL_INFO, "%s: Starting preflight on device %s...", __func__, _dev->udid);
+ 
+ retry:
+-	lerr = lockdownd_client_new(dev, &lockdown, "usbmuxd");
++	{
++		int connect_attempts = 0;
++		while (connect_attempts < 45) {
++			lerr = lockdownd_client_new(dev, &lockdown, "usbmuxd");
++			if (lerr == LOCKDOWN_E_SUCCESS) {
++				break;
++			}
++			if (lerr == LOCKDOWN_E_MUX_ERROR || lerr == LOCKDOWN_E_PAIRING_DIALOG_RESPONSE_PENDING) {
++				usbmuxd_log(LL_INFO, "%s: lockdownd not ready (error %d) on device %s, retrying %d/45...", __func__, lerr, _dev->udid, connect_attempts + 1);
++				sleep(2);
++				connect_attempts++;
++				continue;
++			}
++			break;
++		}
++	}
+ 	if (lerr != LOCKDOWN_E_SUCCESS) {
+-		usbmuxd_log(LL_ERROR, "%s: ERROR: Could not connect to lockdownd on device %s, lockdown error %d", __func__, _dev->udid, lerr);
++		usbmuxd_log(LL_ERROR, "%s: ERROR: Could not connect to lockdownd on device %s, lockdown error %d after retries", __func__, _dev->udid, lerr);
+ 		goto leave;
+ 	}
+ 
+-- 
+2.47.0

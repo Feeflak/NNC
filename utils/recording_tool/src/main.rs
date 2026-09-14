@@ -6,6 +6,7 @@ use std::{
     process::Command,
 };
 
+use image::ImageFormat;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -21,15 +22,183 @@ fn execute_command(cmd: String) {
     println!("CMD: {cmd}");
     Command::new("bash").arg("-c").arg(cmd).output().unwrap();
 }
+fn execute_command_checked(cmd: String) -> bool {
+    println!("CMD: {cmd}");
+    match Command::new("bash").arg("-c").arg(cmd).output() {
+        Ok(output) => output.status.success(),
+        Err(_) => false,
+    }
+}
+fn get_codec_name(path: &str, stream_type: char) -> Option<String> {
+    let stream_selector = format!("{}:0", stream_type);
+    let output = Command::new("ffprobe")
+        .args(&[
+            "-v",
+            "error",
+            "-select_streams",
+            &stream_selector,
+            "-show_entries",
+            "stream=codec_name",
+            "-of",
+            "default=noprint_wrappers=1:nokey=1",
+            path,
+        ])
+        .output()
+        .ok()?;
+    let codec = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    if codec.is_empty() {
+        None
+    } else {
+        Some(codec)
+    }
+}
+fn transcode_single_file(
+    path_string: &str,
+    remove_original: bool,
+    video_codec: Option<&str>,
+    audio_codec: Option<&str>,
+) {
+    let path = Path::new(path_string);
+    let parent = path.parent().unwrap();
+    let stem = path.file_stem().unwrap().to_string_lossy();
+
+    let mut new_name = String::with_capacity(stem.len() + 7);
+    new_name.push_str(&stem);
+    new_name.push('T');
+    new_name.push_str(".mkv");
+
+    let video_options = if video_codec == Some("av1") {
+        "-c:v copy".to_string()
+    } else {
+        "-c:v av1_nvenc -preset p5 -cq 28 -pix_fmt yuv420p -colorspace bt709 -color_primaries bt709 -color_trc bt709 -color_range pc".to_string()
+    };
+
+    let audio_options = if audio_codec == Some("flac") {
+        "-c:a copy".to_string()
+    } else {
+        "-c:a flac".to_string()
+    };
+
+    let transcoded_file_path = parent.join(new_name);
+    let output_path = transcoded_file_path.to_str().unwrap();
+    let success = execute_command_checked(format!(
+        "ffmpeg -i {path_string} {video_options} {audio_options} {output_path}"
+    ));
+
+    if remove_original && success {
+        println!("REMOVE: {path_string}");
+        fs::remove_file(path_string).unwrap();
+    }
+}
+fn is_video_file(path: &Path) -> bool {
+    const VIDEO_EXTENSIONS: &[&str] = &[
+        "mkv", "mp4", "avi", "mov", "webm", "ts", "m2ts", "flv", "wmv", "mpg", "mpeg", "m4v",
+    ];
+    path.extension()
+        .and_then(|e| e.to_str())
+        .map(|e| VIDEO_EXTENSIONS.contains(&e.to_lowercase().as_str()))
+        .unwrap_or(false)
+}
+fn is_existing_transcode(path: &Path) -> bool {
+    path.file_stem()
+        .unwrap_or_default()
+        .to_string_lossy()
+        .ends_with('T')
+}
+fn collect_video_files(dir: &Path, files: &mut Vec<std::path::PathBuf>) {
+    if let Ok(entries) = fs::read_dir(dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_file() && is_video_file(&path) && !is_existing_transcode(&path) {
+                files.push(path);
+            } else if path.is_dir() {
+                collect_video_files(&path, files);
+            }
+        }
+    }
+}
+fn convert_jpg_single_file(path_string: &str, remove_original: bool) {
+    let path = Path::new(path_string);
+    let parent = path.parent().unwrap();
+    let stem = path.file_stem().unwrap().to_string_lossy();
+
+    let mut new_name = String::with_capacity(stem.len() + 5);
+    new_name.push_str(&stem);
+    new_name.push('J');
+    new_name.push_str(".jpg");
+
+    let output_path = parent.join(new_name);
+    let output_path_string = output_path.to_str().unwrap();
+
+    let success = match image::open(path_string) {
+        Ok(img) => img.save_with_format(output_path_string, ImageFormat::Jpeg).is_ok(),
+        Err(_) => false,
+    };
+
+    if success {
+        println!("CONVERTED: {path_string} -> {output_path_string}");
+    } else {
+        println!("FAILED: {path_string}");
+    }
+
+    if remove_original && success {
+        println!("REMOVE: {path_string}");
+        fs::remove_file(path_string).unwrap();
+    }
+}
+fn is_photo_file(path: &Path) -> bool {
+    const PHOTO_EXTENSIONS: &[&str] = &[
+        "jpg", "jpeg", "png", "bmp", "tiff", "tif", "webp", "gif", "heic", "heif", "avif",
+        "ppm", "pgm", "pbm",
+    ];
+    path.extension()
+        .and_then(|e| e.to_str())
+        .map(|e| PHOTO_EXTENSIONS.contains(&e.to_lowercase().as_str()))
+        .unwrap_or(false)
+}
+fn is_jpg_file(path: &Path) -> bool {
+    path.extension()
+        .and_then(|e| e.to_str())
+        .map(|e| {
+            let e = e.to_lowercase();
+            e == "jpg" || e == "jpeg"
+        })
+        .unwrap_or(false)
+}
+fn is_existing_jpg_conversion(path: &Path) -> bool {
+    path.file_stem()
+        .unwrap_or_default()
+        .to_string_lossy()
+        .ends_with('J')
+}
+fn collect_photo_files(dir: &Path, files: &mut Vec<std::path::PathBuf>) {
+    if let Ok(entries) = fs::read_dir(dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_file() && is_photo_file(&path) && !is_existing_jpg_conversion(&path) {
+                files.push(path);
+            } else if path.is_dir() {
+                collect_photo_files(&path, files);
+            }
+        }
+    }
+}
 const HELP: &'static str = r#"
 rec-start -> start recording
+rec-app-audio -> start recording application audio
 rec-end -> end recording
-shot-clipboard -> do a screenshot to clipboard
-shot-save -> do a screenshot and open save dialog
+shot-clipboard -> screenshot to clipboard
+shot-save -> screenshot with save dialog
+vo -> record voice-over
 proj "PROJECT NAME" -> set project name
-manim-logo "Input .svg file path" -> creates an animation for this logo in manim 
-manim-note  ->
-help -> help
+transcode [paths...] [-r] -> transcode videos to av1+flac mkv
+transcode-recursive [paths...] [-r] -> recursively transcode videos to av1+flac mkv
+convert-jpg [paths...] [-r] -> convert photos to jpg
+convert-jpg-recursive [paths...] [-r] -> recursively convert photos to jpg
+manim-logo "Input .svg file path" -> create logo animation
+manim-note "title" "contents" -> create note animation
+manim-write "text" [font_size] -> create write animation
+help -> show this help
 "#;
 
 fn main() {
@@ -65,25 +234,119 @@ add 'help' argument to see all possible operations
     );
     match operation_name.as_str() {
         "transcode" => {
-            while let Some(path_string) = args.next() {
+            let mut remove_original = false;
+            let paths: Vec<String> = args
+                .filter(|arg| {
+                    if arg == "-r" {
+                        remove_original = true;
+                        false
+                    } else {
+                        true
+                    }
+                })
+                .collect();
+
+            for path_string in paths {
+                let video_codec = get_codec_name(&path_string, 'v');
+                let audio_codec = get_codec_name(&path_string, 'a');
+                transcode_single_file(
+                    &path_string,
+                    remove_original,
+                    video_codec.as_deref(),
+                    audio_codec.as_deref(),
+                );
+            }
+        }
+        "transcode-recursive" => {
+            let mut remove_original = false;
+            let paths: Vec<String> = args
+                .filter(|arg| {
+                    if arg == "-r" {
+                        remove_original = true;
+                        false
+                    } else {
+                        true
+                    }
+                })
+                .collect();
+
+            let mut video_files = Vec::new();
+            for path_string in paths {
                 let path = Path::new(&path_string);
-                let parent = path.parent().unwrap();
-                let stem = path.file_stem().unwrap().to_string_lossy();
+                if path.is_dir() {
+                    collect_video_files(path, &mut video_files);
+                } else if path.is_file() && is_video_file(path) && !is_existing_transcode(path) {
+                    video_files.push(path.to_path_buf());
+                }
+            }
 
-                let mut new_name = String::with_capacity(stem.len() + 7);
-                new_name.push_str(&stem);
-                new_name.push_str(".mov");
+            for video_path in video_files {
+                let path_string = video_path.to_string_lossy().to_string();
+                let video_codec = get_codec_name(&path_string, 'v');
+                let audio_codec = get_codec_name(&path_string, 'a');
 
-                let transcoded_file_path = parent.join(new_name);
-                execute_command(format!(
-                    "ffmpeg -i {path_string} \
-        -vf fps=60 \
-        -c:v dnxhd -profile:v dnxhr_sq \
-        -pix_fmt yuv422p \
-        -c:a pcm_s16le \
-                    {}",
-                    transcoded_file_path.to_str().unwrap()
-                ));
+                if video_codec.as_deref() == Some("av1") && audio_codec.as_deref() == Some("flac")
+                {
+                    println!("SKIP: {path_string} (already av1 + flac)");
+                    continue;
+                }
+
+                transcode_single_file(
+                    &path_string,
+                    remove_original,
+                    video_codec.as_deref(),
+                    audio_codec.as_deref(),
+                );
+            }
+        }
+        "convert-jpg" => {
+            let mut remove_original = false;
+            let paths: Vec<String> = args
+                .filter(|arg| {
+                    if arg == "-r" {
+                        remove_original = true;
+                        false
+                    } else {
+                        true
+                    }
+                })
+                .collect();
+
+            for path_string in paths {
+                convert_jpg_single_file(&path_string, remove_original);
+            }
+        }
+        "convert-jpg-recursive" => {
+            let mut remove_original = false;
+            let paths: Vec<String> = args
+                .filter(|arg| {
+                    if arg == "-r" {
+                        remove_original = true;
+                        false
+                    } else {
+                        true
+                    }
+                })
+                .collect();
+
+            let mut photo_files = Vec::new();
+            for path_string in paths {
+                let path = Path::new(&path_string);
+                if path.is_dir() {
+                    collect_photo_files(path, &mut photo_files);
+                } else if path.is_file() && is_photo_file(path) && !is_existing_jpg_conversion(path)
+                {
+                    photo_files.push(path.to_path_buf());
+                }
+            }
+
+            for photo_path in photo_files {
+                let path_string = photo_path.to_string_lossy().to_string();
+                if is_jpg_file(&photo_path) {
+                    println!("SKIP: {path_string} (already jpg)");
+                    continue;
+                }
+                convert_jpg_single_file(&path_string, remove_original);
             }
         }
         "rec-end" => {
@@ -98,11 +361,16 @@ add 'help' argument to see all possible operations
             execute_command(format!(
                 r#"
 gpu-screen-recorder -v yes \
-          -w screen \
-          -f 60 \
-          -a default_output \
-          -k av1_hdr \
-          -o "{}/recording_$(date +%F_%H-%M-%S).mkv" 
+        -w portal \
+        -f 60 \
+        -a default_output \
+        -ac flac \
+        -k av1 \
+        -cr full \
+        -q high \
+        -restore-portal-session yes \
+        -portal-session-token-filepath ~/.config/gsr-portal-token.txt \
+        -o "{}/recording_$(date +%F_%H-%M-%S).mkv"
 "#,
                 project_path(&config) + "/rec"
             ))
@@ -115,11 +383,16 @@ gpu-screen-recorder -v yes \
             execute_command(format!(
                 r#"
 gpu-screen-recorder -v yes \
-          -w screen \
-          -f 60 \
-          -a default_input \
-          -k av1_hdr \
-          -o "{}/recording_$(date +%F_%H-%M-%S).mkv" 
+        -w portal \
+        -f 60 \
+        -a default_input \
+        -ac flac \
+        -k av1 \
+        -cr full \
+        -q high \
+        -restore-portal-session yes \
+        -portal-session-token-filepath ~/.config/gsr-portal-token.txt \
+        -o "{}/recording_$(date +%F_%H-%M-%S).mkv"
 "#,
                 project_path(&config) + "/rec"
             ))
