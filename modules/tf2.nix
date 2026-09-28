@@ -4,7 +4,7 @@
     { pkgs, ... }:
     {
       environment.systemPackages = with pkgs; [
-flightcore
+        # flightcore removed: not available in nixos-26.05 stable
       ];
     };
 }

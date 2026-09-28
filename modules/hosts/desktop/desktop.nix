@@ -6,7 +6,7 @@
 }:
 {
   flake-file.inputs.home-manager = {
-    url = lib.mkDefault "github:nix-community/home-manager";
+    url = lib.mkDefault "github:nix-community/home-manager/release-26.05";
     inputs.nixpkgs.follows = "nixpkgs";
   };
 

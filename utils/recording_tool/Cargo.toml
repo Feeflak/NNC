@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+anyhow = "1.0.104"
 serde = { version = "1.0.228", features = ["derive"] }
 toml = "1.1.2+spec-1.1.0"
 image = "0.25"

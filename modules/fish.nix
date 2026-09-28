@@ -85,6 +85,8 @@
           rt = "recording_tool";
           rtp = "recording_tool proj";
           rtt = "recording_tool transcode";
+          rtc = "recording_tool convert";
+          rtcr = "recording_tool convert-recursive";
           rnm = ''
             set cmd '<>';
             recording_tool manim-note "<>" "$cmd"

@@ -1,7 +1,8 @@
 {
 
   flake-file.inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
   };
   flake.nixosModules.systemGeneral =
     { pkgs, ... }:
@@ -11,7 +12,7 @@
       nixpkgs.config.allowUnfree = true;
 
       time.timeZone = "Europe/Warsaw";
-      boot.kernelPackages = pkgs.linuxPackages_zen; # Should be stabler and better for gaming
+      boot.kernelPackages = pkgs.linuxPackages; # zen 7.2.7 is incompatible with nvidia-open in 26.05
       security.sudo.wheelNeedsPassword = false;
       services.gnome.gnome-keyring.enable = true;
       environment.systemPackages = with pkgs; [
