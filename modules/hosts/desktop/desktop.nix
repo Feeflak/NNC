@@ -31,6 +31,7 @@
         asm
         ocaml
 
+        cad
         resolve
         desktop
         hyprland
