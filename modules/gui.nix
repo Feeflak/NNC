@@ -8,7 +8,6 @@
         gparted
         # firefox
         freecad
-        feishin
         ghostty
         orca-slicer
         opencode

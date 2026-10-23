@@ -5,10 +5,16 @@
   };
   flake.nixosModules.steam = { pkgs, ... }: {
     imports = [ inputs.steam-config-nix.nixosModules.default ];
-    
 
+    environment.systemPackages = with pkgs; [
+      gamescope-wsi # HDR might not work without this
+    ];
     programs = {
       gamemode.enable = true;
+      gamescope = {
+        enable = true;
+        capSysNice = false;
+      };
       steam = {
         extraCompatPackages = with pkgs; [
           # proton-cachyos-x86_64-v4
@@ -33,7 +39,7 @@
 
           apps = {
             "1091500" = {
-              name = "cyberpunk-2077" ;
+              name = "cyberpunk-2077";
               compatTool = "GE-Proton";
               launchOptions = {
                 env.WINEDLLOVERRIDES = "winmm,version=n,b";
@@ -47,5 +53,10 @@
         };
       };
     };
+
+    # Stop the Feeflak translator from being detected as a joystick in games
+    services.udev.extraRules = ''
+      SUBSYSTEM=="input", ATTRS{idVendor}=="feed", ATTRS{idProduct}=="6060", ENV{ID_INPUT_JOYSTICK}=""
+    '';
   };
 }
