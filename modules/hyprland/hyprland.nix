@@ -1,5 +1,20 @@
 {
   flake.nixosModules.hyprland = {pkgs, ...}: {
+    nixpkgs.overlays = [
+      (final: prev: {
+        python3Packages = prev.python3Packages.override {
+          overrides = pyfinal: pyprev: {
+            imageio = pyprev.imageio.overridePythonAttrs (old: {
+              disabledTests = (old.disabledTests or [ ]) ++ [
+                "test_png_16bit"
+                "test_png"
+              ];
+            });
+          };
+        };
+      })
+    ];
+
     environment.systemPackages = with pkgs; [
       rofi
       hyprlock
