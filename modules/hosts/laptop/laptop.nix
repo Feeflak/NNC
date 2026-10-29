@@ -43,6 +43,7 @@
         essentials
         flatpak
         zen
+        learnharness
         steam
         fontsImport
         keyboardFlashing
