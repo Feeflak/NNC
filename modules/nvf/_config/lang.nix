@@ -38,7 +38,7 @@
         enable = true;
         lsp.enable = true;
       };
-      astro.enable = true;
+      astro.enable = false; # disabled: nvf's prettier-plugin-astro pnpm hash is stale upstream
       csharp = {
         enable = true;
         lsp.servers = [ "roslyn-ls" ];
