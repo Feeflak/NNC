@@ -6,7 +6,7 @@ appimageTools.wrapType2 rec {
 
   src = fetchurl {
     url = "https://github.com/amosblomqvist/learnharness/releases/download/v${version}/LearnHarness-${version}-x86_64.AppImage";
-    hash = "sha256-00qfd2pfymqynx6ddsg45la1w48gi4ib3qmfylp68zq607i13frd";
+    hash = "sha256-LbsR4gEGf2Qu9a7isSKJDxEeFC3k6dZMtx5X765oDgM=";
   };
 
   meta = {
