@@ -34,7 +34,7 @@
         assertions = lib.optionals isImpureEval (map
           (name: {
             assertion = cfg.values.${name} != "";
-            message = "secret ${name} is missing from the env variables. Use `secretspec run --file ./secretspec.toml --profile default -- sudo -E nixos-rebuild switch --impure --flake .#<host>` so SecretSpec injects it, and use `sudo -E` to preserve env variables";
+            message = "secret ${name} is missing from the env variables. Use `secretspec run --file ./secretspec.toml --profile development -- sudo -E nixos-rebuild switch --impure --flake .#<host>` so SecretSpec injects it, and use `sudo -E` to preserve env variables";
           })
           cfg.required
         );

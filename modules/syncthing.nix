@@ -1,7 +1,11 @@
 {
-  flake.nixosModules.syncthing = { config, lib, pkgs, ... }:
+  flake.nixosModules.syncthing =
+    {
+      config,
+      lib,
+      ...
+    }:
     let
-      cfg = config.services.syncthing;
       userGroup = config.users.users.f.group;
       deviceId = config.custom.secrets.values.SYNCTHING_IPHONE_ID;
     in
@@ -21,8 +25,8 @@
               name = "iphone";
             };
             folders.iphone = {
-              path = "/home/f/iphone";
-              label = "iPhone";
+              path = "/home/f/sync/photos";
+              label = "photos";
               devices = [ "iphone" ];
             };
           };
