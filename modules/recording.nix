@@ -6,7 +6,7 @@
       environment.systemPackages = [
         pkgs.gpu-screen-recorder
         # pkgs.manim
-        pkgs.losslesscut
+        # pkgs.losslesscut
         pkgs.wf-recorder
         pkgs.kdePackages.dolphin
         pkgs.grimblast
