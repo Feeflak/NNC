@@ -15,8 +15,6 @@
           helium = "nix run github:AlvaroParker/helium-nix";
           # zen = "nix run github:youwen5/zen-browser-flake";
           onUpdate = "sudo /etc/nixos/onUpdate.sh";
-          rebuild = "readHost ; cd /etc/nixos/NNC/ ; git add '*'; sudo nix run .#write-flake --access-tokens github.com=$GITHUB_TOKEN ; sudo nixos-rebuild switch --upgrade --flake .#$host";
-          updateNix = "cd /etc/nixos/NNC/; git pull ; rebuild ; sudo nix flake update --access-tokens github.com=$GITHUB_TOKEN ; flatpak update -y ; onUpdate ; cleanup; nix-store --optimise ; syncTodo";
           config = "ne /etc/nixos/NNC/modules";
           configSystem = "sudo -E -s nvim /etc/nixos/flake.nix";
           updateAllSubmodules = "git submodule update --init --recursive";
@@ -41,6 +39,25 @@
           clear
         '';
         functions = {
+          rebuild = {
+            body = ''
+              cd /etc/nixos/NNC/
+              ./utils/rebuild.sh
+            '';
+          };
+          updateNix = {
+            body = ''
+              cd /etc/nixos/NNC/
+              git pull
+              and ./utils/rebuild.sh
+              and ./utils/update-flake.sh
+              and flatpak update -y
+              and onUpdate
+              and cleanup
+              and nix-store --optimise
+              and syncTodo
+            '';
+          };
           rp.body = ''
             set output (recording_tool 2>&1)
 

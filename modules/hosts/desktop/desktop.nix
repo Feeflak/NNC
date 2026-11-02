@@ -16,6 +16,7 @@
   flake = {
     nixosConfigurations.desktop = inputs.nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
+      specialArgs = { inherit inputs; };
       modules = with self.nixosModules; [
         ios
         tf2
@@ -60,6 +61,8 @@
         fUser
         nvidia
         networking
+        secrets
+        syncthing
         systemGeneral
         systemdBoot
         #grub
