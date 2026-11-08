@@ -22,7 +22,7 @@
           settings = lib.mkIf (deviceId != "") {
             devices.iphone = {
               id = deviceId;
-              name = "iphone";
+              name = "photos";
             };
             folders.iphone = {
               path = "/home/f/sync/photos";
