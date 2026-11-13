@@ -1,14 +1,18 @@
 { lib, ... }:
 let
   learnharness =
-    { lib, appimageTools, fetchurl }:
+    {
+      lib,
+      appimageTools,
+      fetchurl,
+    }:
     let
       pname = "learnharness";
-      version = "0.5.0";
+      version = "0.6.1";
 
       src = fetchurl {
         url = "https://github.com/amosblomqvist/learnharness/releases/download/v${version}/LearnHarness-${version}-x86_64.AppImage";
-        hash = "sha256:b5bd8498ad53ca2a8eb7080734af0ec5aaaec1bb6ac55f246e85029ccba69dc3";
+        hash = "sha256:b8a033eb7421677893d96e4988b30153fdfe4fc6f0dc456f7947161bba041b98";
       };
 
       appimageContents = appimageTools.extract { inherit pname version src; };
