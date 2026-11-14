@@ -3,6 +3,7 @@ set -euo pipefail
 
 cd /etc/nixos/NNC
 
-nix-shell -p secretspec --run 'secretspec run --file /etc/nixos/NNC/secretspec.toml -- bash -c "
+
+secretspec run --file /etc/nixos/NNC/secretspec.toml --reason "Rebuild NixOS system" -- bash -c '
   sudo -E -H nix flake update --access-tokens github.com=$GITHUB_TOKEN
-"'
+'
