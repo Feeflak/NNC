@@ -1,12 +1,12 @@
 {
-  flake.nixosModules.plymouth = {pkgs, ...}: {
+  flake.nixosModules.plymouth = { pkgs, ... }: {
     boot = {
       plymouth = {
         enable = true;
         theme = "rings_2";
         themePackages = with pkgs; [
           (adi1090x-plymouth-themes.override {
-            selected_themes = ["rings_2"];
+            selected_themes = [ "rings_2" ];
           })
         ];
       };
@@ -16,9 +16,8 @@
       initrd.verbose = false;
       kernelParams = [
         "quiet"
-        "udev.log_level=3"
-        "systemd.show_status=auto"
-        "video=3840x2160"
+        "rd.udev.log_level=3"
+        "rd.systemd.show_status=auto"
       ];
 
       # Hide the OS choice for bootloaders.

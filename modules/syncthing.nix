@@ -22,11 +22,12 @@
           settings = lib.mkIf (deviceId != "") {
             devices.iphone = {
               id = deviceId;
-              name = "photos";
+              name = "photo";
             };
-            folders.iphone = {
-              path = "/home/f/sync/photos";
-              label = "photos";
+            folders.photo = {
+              path = "/home/f/sync/photo";
+              label = "photo";
+              type = "receiveonly";
               devices = [ "iphone" ];
             };
           };
@@ -35,7 +36,7 @@
         custom.secrets.required = [ "SYNCTHING_IPHONE_ID" ];
 
         systemd.tmpfiles.rules = [
-          "d /home/f/iphone 0755 f ${userGroup} -"
+          "d /home/f/sync/photo 0755 f ${userGroup} -"
         ];
       };
     };
