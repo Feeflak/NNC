@@ -81,9 +81,10 @@ fn transcode_single_file(
     remove_original: bool,
     video_codec: Option<&str>,
     audio_codecs: &[String],
+    output_dir: Option<&Path>,
 ) {
     let path = Path::new(path_string);
-    let parent = path.parent().unwrap();
+    let output_dir = output_dir.unwrap_or_else(|| path.parent().unwrap());
     let stem = path.file_stem().unwrap().to_string_lossy();
 
     let mut new_name = String::with_capacity(stem.len() + 7);
@@ -104,7 +105,7 @@ fn transcode_single_file(
         "-c:a flac".to_string()
     };
 
-    let transcoded_file_path = parent.join(new_name);
+    let transcoded_file_path = output_dir.join(new_name);
     let output_path = transcoded_file_path.to_str().unwrap();
     let success = execute_command_checked(format!(
         "ffmpeg -i {path_string} {video_options} {audio_options} {output_path}"
@@ -142,9 +143,9 @@ fn collect_video_files(dir: &Path, files: &mut Vec<std::path::PathBuf>) {
         }
     }
 }
-fn convert_jpg_single_file(path_string: &str, remove_original: bool) {
+fn convert_jpg_single_file(path_string: &str, remove_original: bool, output_dir: Option<&Path>) {
     let path = Path::new(path_string);
-    let parent = path.parent().unwrap();
+    let output_dir = output_dir.unwrap_or_else(|| path.parent().unwrap());
     let stem = path.file_stem().unwrap().to_string_lossy();
 
     let mut new_name = String::with_capacity(stem.len() + 5);
@@ -152,7 +153,7 @@ fn convert_jpg_single_file(path_string: &str, remove_original: bool) {
     new_name.push('J');
     new_name.push_str(".jpg");
 
-    let output_path = parent.join(new_name);
+    let output_path = output_dir.join(new_name);
     let output_path_string = output_path.to_str().unwrap();
 
     let success = if is_heic_file(path) {
@@ -228,7 +229,7 @@ fn collect_photo_files(dir: &Path, files: &mut Vec<std::path::PathBuf>) {
         }
     }
 }
-fn convert_single_file(path_string: &str, remove_original: bool) {
+fn convert_single_file(path_string: &str, remove_original: bool, output_dir: Option<&Path>) {
     let path = Path::new(path_string);
     if is_video_file(path) && !is_existing_transcode(path) {
         let video_codec = get_codec_name(path_string, 'v');
@@ -238,9 +239,10 @@ fn convert_single_file(path_string: &str, remove_original: bool) {
             remove_original,
             video_codec.as_deref(),
             &audio_codecs,
+            output_dir,
         );
     } else if is_photo_file(path) && !is_existing_jpg_conversion(path) && !is_jpg_file(path) {
-        convert_jpg_single_file(path_string, remove_original);
+        convert_jpg_single_file(path_string, remove_original, output_dir);
     }
 }
 fn collect_media_files(dir: &Path, files: &mut Vec<std::path::PathBuf>) {
@@ -268,12 +270,12 @@ shot-clipboard -> screenshot to clipboard
 shot-save -> screenshot with save dialog
 vo -> record voice-over
 proj "PROJECT NAME" -> set project name
-transcode [paths...] [-r] -> transcode videos to av1+flac mkv
-transcode-recursive [paths...] [-r] -> recursively transcode videos to av1+flac mkv
-convert-jpg [paths...] [-r] -> convert photos to jpg
-convert-jpg-recursive [paths...] [-r] -> recursively convert photos to jpg
-convert [paths...] [-r] -> convert images and videos in given paths
-convert-recursive [paths...] [-r] -> recursively convert images and videos
+transcode [paths...] [-r] [-p|--project-dir] -> transcode videos to av1+flac mkv
+transcode-recursive [paths...] [-r] [-p|--project-dir] -> recursively transcode videos to av1+flac mkv
+convert-jpg [paths...] [-r] [-p|--project-dir] -> convert photos to jpg
+convert-jpg-recursive [paths...] [-r] [-p|--project-dir] -> recursively convert photos to jpg
+convert [paths...] [-r] [-p|--project-dir] -> convert images and videos in given paths
+convert-recursive [paths...] [-r] [-p|--project-dir] -> recursively convert images and videos
 manim-logo "Input .svg file path" -> create logo animation
 manim-note "title" "contents" -> create note animation
 manim-write "text" [font_size] -> create write animation
@@ -314,16 +316,27 @@ add 'help' argument to see all possible operations
     match operation_name.as_str() {
         "transcode" => {
             let mut remove_original = false;
+            let mut save_to_project_dir = false;
             let paths: Vec<String> = args
                 .filter(|arg| {
                     if arg == "-r" {
                         remove_original = true;
+                        false
+                    } else if arg == "-p" || arg == "--project-dir" {
+                        save_to_project_dir = true;
                         false
                     } else {
                         true
                     }
                 })
                 .collect();
+
+            let project_dir = project_path(&config);
+            let output_dir = if save_to_project_dir {
+                Some(Path::new(&project_dir))
+            } else {
+                None
+            };
 
             for path_string in paths {
                 let video_codec = get_codec_name(&path_string, 'v');
@@ -333,21 +346,33 @@ add 'help' argument to see all possible operations
                     remove_original,
                     video_codec.as_deref(),
                     &audio_codecs,
+                    output_dir,
                 );
             }
         }
         "transcode-recursive" => {
             let mut remove_original = false;
+            let mut save_to_project_dir = false;
             let paths: Vec<String> = args
                 .filter(|arg| {
                     if arg == "-r" {
                         remove_original = true;
+                        false
+                    } else if arg == "-p" || arg == "--project-dir" {
+                        save_to_project_dir = true;
                         false
                     } else {
                         true
                     }
                 })
                 .collect();
+
+            let project_dir = project_path(&config);
+            let output_dir = if save_to_project_dir {
+                Some(Path::new(&project_dir))
+            } else {
+                None
+            };
 
             let mut video_files = Vec::new();
             for path_string in paths {
@@ -376,15 +401,20 @@ add 'help' argument to see all possible operations
                     remove_original,
                     video_codec.as_deref(),
                     &audio_codecs,
+                    output_dir,
                 );
             }
         }
         "convert-jpg" => {
             let mut remove_original = false;
+            let mut save_to_project_dir = false;
             let paths: Vec<String> = args
                 .filter(|arg| {
                     if arg == "-r" {
                         remove_original = true;
+                        false
+                    } else if arg == "-p" || arg == "--project-dir" {
+                        save_to_project_dir = true;
                         false
                     } else {
                         true
@@ -392,22 +422,40 @@ add 'help' argument to see all possible operations
                 })
                 .collect();
 
+            let project_dir = project_path(&config);
+            let output_dir = if save_to_project_dir {
+                Some(Path::new(&project_dir))
+            } else {
+                None
+            };
+
             for path_string in paths {
-                convert_jpg_single_file(&path_string, remove_original);
+                convert_jpg_single_file(&path_string, remove_original, output_dir);
             }
         }
         "convert-jpg-recursive" => {
             let mut remove_original = false;
+            let mut save_to_project_dir = false;
             let paths: Vec<String> = args
                 .filter(|arg| {
                     if arg == "-r" {
                         remove_original = true;
+                        false
+                    } else if arg == "-p" || arg == "--project-dir" {
+                        save_to_project_dir = true;
                         false
                     } else {
                         true
                     }
                 })
                 .collect();
+
+            let project_dir = project_path(&config);
+            let output_dir = if save_to_project_dir {
+                Some(Path::new(&project_dir))
+            } else {
+                None
+            };
 
             let mut photo_files = Vec::new();
             for path_string in paths {
@@ -426,15 +474,19 @@ add 'help' argument to see all possible operations
                     println!("SKIP: {path_string} (already jpg)");
                     continue;
                 }
-                convert_jpg_single_file(&path_string, remove_original);
+                convert_jpg_single_file(&path_string, remove_original, output_dir);
             }
         }
         "convert" => {
             let mut remove_original = false;
+            let mut save_to_project_dir = false;
             let paths: Vec<String> = args
                 .filter(|arg| {
                     if arg == "-r" {
                         remove_original = true;
+                        false
+                    } else if arg == "-p" || arg == "--project-dir" {
+                        save_to_project_dir = true;
                         false
                     } else {
                         true
@@ -442,22 +494,40 @@ add 'help' argument to see all possible operations
                 })
                 .collect();
 
+            let project_dir = project_path(&config);
+            let output_dir = if save_to_project_dir {
+                Some(Path::new(&project_dir))
+            } else {
+                None
+            };
+
             for path_string in paths {
-                convert_single_file(&path_string, remove_original);
+                convert_single_file(&path_string, remove_original, output_dir);
             }
         }
         "convert-recursive" => {
             let mut remove_original = false;
+            let mut save_to_project_dir = false;
             let paths: Vec<String> = args
                 .filter(|arg| {
                     if arg == "-r" {
                         remove_original = true;
+                        false
+                    } else if arg == "-p" || arg == "--project-dir" {
+                        save_to_project_dir = true;
                         false
                     } else {
                         true
                     }
                 })
                 .collect();
+
+            let project_dir = project_path(&config);
+            let output_dir = if save_to_project_dir {
+                Some(Path::new(&project_dir))
+            } else {
+                None
+            };
 
             let mut media_files = Vec::new();
             for path_string in paths {
@@ -477,7 +547,7 @@ add 'help' argument to see all possible operations
 
             for media_path in media_files {
                 let path_string = media_path.to_string_lossy().to_string();
-                convert_single_file(&path_string, remove_original);
+                convert_single_file(&path_string, remove_original, output_dir);
             }
         }
         "rec-end" => {
