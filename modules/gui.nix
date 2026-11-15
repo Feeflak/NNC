@@ -9,7 +9,6 @@
         # firefox
         freecad
         ghostty
-        orca-slicer
         opencode
         # kdePackages.dolphin
       ];

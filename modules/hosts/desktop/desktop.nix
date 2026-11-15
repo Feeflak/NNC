@@ -73,6 +73,7 @@
       { pkgs, ... }:
       {
         services.flatpak.packages = [
+          "com.orcaslicer.OrcaSlicer"
           "io.ente.auth"
           "com.brave.Browser"
           "com.discordapp.Discord"
