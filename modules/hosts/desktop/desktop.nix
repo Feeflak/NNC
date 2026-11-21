@@ -18,6 +18,7 @@
       system = "x86_64-linux";
       specialArgs = { inherit inputs; };
       modules = with self.nixosModules; [
+        music
         ios
         tf2
         noctalia
