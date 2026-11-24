@@ -23,22 +23,8 @@
       boot.kernelModules = [ "kvm-amd" ];
       boot.extraModulePackages = [ ];
 
-      fileSystems."/" = {
-        device = "/dev/disk/by-uuid/bac8161a-fcc7-465d-9944-549efd76e1a0";
-        fsType = "ext4";
-      };
-
       boot.initrd.luks.devices."luks-9c6c352a-9681-4e52-885f-3a33e9ce92fe".device =
         "/dev/disk/by-uuid/9c6c352a-9681-4e52-885f-3a33e9ce92fe";
-
-      fileSystems."/boot" = {
-        device = "/dev/disk/by-uuid/2BB5-71EB";
-        fsType = "vfat";
-        options = [
-          "fmask=0077"
-          "dmask=0077"
-        ];
-      };
 
       boot.initrd.secrets = {
         "/root/keys/data.key" = /root/keys/data.key;
@@ -48,20 +34,44 @@
         device = "/dev/disk/by-uuid/e30f59fc-0341-4b86-8cfe-8084ff2a8c1d";
         keyFile = "/root/keys/data.key";
       };
-      fileSystems."/data" = {
-        device = "/dev/mapper/data";
-        neededForBoot = false;
-        fsType = "ext4";
+      fileSystems = {
+
+        "/" = {
+          device = "/dev/disk/by-uuid/bac8161a-fcc7-465d-9944-549efd76e1a0";
+          fsType = "ext4";
+        };
+
+        "/boot" = {
+          device = "/dev/disk/by-uuid/2BB5-71EB";
+          fsType = "vfat";
+          options = [
+            "fmask=0077"
+            "dmask=0077"
+          ];
+        };
+        "/data" = {
+          device = "/dev/mapper/data";
+          neededForBoot = false;
+          fsType = "ext4";
+          options = [
+            # If you don't have this options attribute, it'll default to "defaults"
+            "nofail" # Prevent system from failing if this drive doesn't mount
+          ];
+        };
+        "/home/f/rec" = {
+          device = "/dev/mapper/rec";
+          neededForBoot = false;
+          fsType = "ext4";
+          options = [
+            # If you don't have this options attribute, it'll default to "defaults"
+            "nofail" # Prevent system from failing if this drive doesn't mount
+          ];
+        };
       };
 
       boot.initrd.luks.devices."rec" = {
         device = "/dev/disk/by-uuid/aa575049-4923-492b-a0a9-c0ae54b855e3";
         keyFile = "/etc/luks/rec.key";
-      };
-      fileSystems."/home/f/rec" = {
-        device = "/dev/mapper/rec";
-        neededForBoot = false;
-        fsType = "ext4";
       };
 
       # Enables DHCP on each ethernet and wireless interface. In case of scripted networking
